@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Manual técnico · Logística de envíos</title>
+<link rel="stylesheet" href="estilos.css">
+<style>
+    @page {
+        @bottom-left {
+            content: "Logística de envíos · Manual técnico";
+            font-family: "Segoe UI", Arial, sans-serif; font-size: 8.5pt; color: #64748b;
+        }
+    }
+</style>
+</head>
+<body>
+
+<!-- PORTADA -->
+<section class="portada">
+    <div class="institucion">
+        <strong>Facultad de Ingeniería</strong><br>
+        Ingeniería en Informática y Sistemas<br>
+        Área de Informática · Estructura de Datos II
+    </div>
+    <div class="centro">
+        <span class="etiqueta">Proyecto de laboratorio No. 2</span>
+        <h1>Manual técnico</h1>
+        <div class="subtitulo">Sistema de logística de envíos con Tabla Hash, Grafo, Union-Find y Trie</div>
+        <table>
+            <tr><td>Escenario</td><td>Logística de envíos</td></tr>
+            <tr><td>Lenguaje</td><td>C# · .NET 8 · Windows Forms</td></tr>
+            <tr><td>Integrantes</td><td>Ángel · Johann · Alexis</td></tr>
+            <tr><td>Fecha</td><td>Noviembre de 2026</td></tr>
+        </table>
+    </div>
+    <div class="pie">Documento técnico: arquitectura, implementación, diagramas y análisis de complejidad.</div>
+</section>
+
+<!-- ÍNDICE -->
+<section class="indice">
+    <h2>Contenido</h2>
+    <ol>
+        <li>Introducción</li>
+        <li>Requisitos, compilación y ejecución</li>
+        <li>Arquitectura de la solución</li>
+        <li>Datos de entrada y análisis léxico de los archivos</li>
+        <li>Estructuras de datos implementadas
+            <ol><li>5.1 Tabla Hash · 5.2 Grafo · 5.3 Union-Find · 5.4 Trie · 5.5 Lista enlazada de apoyo</li></ol></li>
+        <li>Integración de las estructuras</li>
+        <li>Diagramas de flujo</li>
+        <li>Diagramas de clases</li>
+        <li>Análisis de complejidad (Big-O) y comparación con .NET</li>
+        <li>Reportes para toma de decisiones</li>
+        <li>Interfaz gráfica</li>
+        <li>Uso de tipos nativos de .NET</li>
+        <li>Limitaciones conocidas y mejoras posibles</li>
+        <li>Distribución de responsabilidades</li>
+    </ol>
+</section>
+
+<!-- 1 -->
+<h1>1. Introducción</h1>
+<p>El sistema administra los envíos de una empresa de paquetería que opera entre ciudades de Guatemala. Cada envío tiene un
+código de rastreo único, remitente, destinatario, ciudad de origen y ciudad de destino. Las ciudades están unidas por rutas de
+transporte con un <strong>costo</strong> (en quetzales) y un <strong>tiempo</strong> (en horas); algunas rutas son de un solo sentido.</p>
+<p>Las operaciones que el problema exige, y la estructura que resuelve cada una, son:</p>
+<table>
+    <tr><th>Operación del problema</th><th>Estructura</th><th>Por qué</th></tr>
+    <tr><td>Localizar un envío por su código de rastreo</td><td><span class="chip hash">Tabla Hash</span></td><td>Búsqueda exacta en O(1) promedio.</td></tr>
+    <tr><td>Sugerir nombres de ciudad (y códigos) mientras se escribe</td><td><span class="chip trie">Trie</span></td><td>El costo depende del largo del prefijo, no de la cantidad de palabras.</td></tr>
+    <tr><td>Calcular la ruta más económica o más rápida</td><td><span class="chip grafo">Grafo</span> + Dijkstra</td><td>Ciudades = vértices, rutas = aristas dirigidas con dos pesos.</td></tr>
+    <tr><td>Recorrer la red de ciudades</td><td><span class="chip grafo">Grafo</span> BFS / DFS</td><td>Recorridos en O(V + E) sobre listas de adyacencia.</td></tr>
+    <tr><td>Saber si dos ciudades están en la misma región antes de asignar una ruta o de ejecutar Dijkstra</td><td><span class="chip uf">Union-Find</span></td><td>Consulta de conectividad en tiempo casi constante, O(α(n)).</td></tr>
+</table>
+<p>Todo el código de las estructuras es propio: no se usan <code>List&lt;T&gt;</code>, <code>Dictionary</code>, <code>HashSet</code>,
+<code>SortedSet</code> ni <code>PriorityQueue</code> para resolver su lógica. La única colección nativa es <code>Queue&lt;int&gt;</code>,
+usada solamente para el orden de visita del recorrido BFS, como permite el enunciado.</p>
+<p>El sistema tiene dos interfaces que comparten exactamente la misma lógica: un <strong>menú de consola</strong> y una
+<strong>interfaz gráfica</strong> en Windows Forms. Además genera <strong>reportes para toma de decisiones</strong> que se pueden exportar a
+<code>.txt</code> y <code>.csv</code>.</p>
+
+<!-- 2 -->
+<h1>2. Requisitos, compilación y ejecución</h1>
+<h2>2.1 Requisitos</h2>
+<ul>
+    <li>Windows 10 u 11 (la interfaz gráfica usa Windows Forms).</li>
+    <li>SDK de .NET 8 o superior para compilar. Los proyectos apuntan a <code>net8.0</code> y tienen
+        <code>&lt;RollForward&gt;Major&lt;/RollForward&gt;</code>: si la computadora solo tiene una versión más nueva de .NET
+        (por ejemplo .NET 10), el programa se ejecuta con esa.</li>
+    <li>Opcional: Visual Studio 2022 o posterior con la carga de trabajo «Desarrollo de escritorio de .NET».</li>
+</ul>
+<h2>2.2 Compilar y ejecutar</h2>
+<p>Desde Visual Studio se abre <code>LogisticaEnvios.sln</code>, se hace clic derecho sobre el proyecto que se desea ejecutar
+(<code>LogisticaEnvios.GUI</code> o <code>LogisticaEnvios.Consola</code>) → <em>Establecer como proyecto de inicio</em> y se presiona
+<span class="tecla">F5</span>. Desde una terminal, en la carpeta de la solución:</p>
+<pre>dotnet build LogisticaEnvios.sln
+dotnet run --project LogisticaEnvios.GUI
+dotnet run --project LogisticaEnvios.Consola</pre>
+<h2>2.3 Estructura de carpetas</h2>
+<pre>LogisticaEnvios/
+├─ LogisticaEnvios.sln
+├─ LogisticaEnvios.Core/        biblioteca: estructuras, integración y reportes
+│   ├─ TablaHash.cs  Grafo.cs  UnionFind.cs  Trie.cs  ListaEnlazada.cs
+│   ├─ Envio.cs  SistemaLogistica.cs  Resultados.cs  Reportes.cs
+├─ LogisticaEnvios.Consola/     menú de consola (Program.cs)
+├─ LogisticaEnvios.GUI/         interfaz gráfica (formularios y controles propios)
+├─ datos/                       ciudades.csv, rutas.csv, envios.csv
+├─ reportes/                    se crea al exportar reportes
+└─ docs/                        manuales (PDF) y sus fuentes</pre>
+
+<!-- 3 -->
+<h1>3. Arquitectura de la solución</h1>
+<p>La solución tiene tres proyectos. La biblioteca <strong>LogisticaEnvios.Core</strong> contiene las cuatro estructuras, la clase
+<code>SistemaLogistica</code> que las integra y el generador de reportes. Esta biblioteca <strong>no escribe en pantalla</strong>: sus métodos
+devuelven objetos de resultado (<code>ResultadoRuta</code>, <code>ResultadoDijkstra</code>, <code>ResultadoRecorrido</code>,
+<code>ResultadoCarga</code>, <code>Reporte</code>). La consola convierte esos resultados en texto y la interfaz gráfica los muestra en
+tablas o los dibuja en el mapa. Así ambas interfaces usan exactamente la misma lógica y no se repite código.</p>
+<figure>
+    <img class="diagrama" src="diagramas/arquitectura.svg" alt="Arquitectura de la solución">
+    <figcaption>Figura 1. Proyectos de la solución y su relación con los archivos de datos.</figcaption>
+</figure>
+<h2>3.1 Responsabilidad de cada clase</h2>
+<table>
+    <tr><th>Clase</th><th>Proyecto</th><th>Responsabilidad</th></tr>
+    <tr><td><code>Envio</code></td><td>Core</td><td>Dato que guarda la tabla hash (código, remitente, destinatario, origen y destino).</td></tr>
+    <tr><td><code>TablaHash</code></td><td>Core</td><td>Guarda los envíos por código de rastreo (direccionamiento abierto con sondeo lineal).</td></tr>
+    <tr><td><code>Grafo</code>, <code>Arista</code></td><td>Core</td><td>Ciudades y rutas dirigidas con costo y tiempo; BFS, DFS y Dijkstra.</td></tr>
+    <tr><td><code>UnionFind</code></td><td>Core</td><td>Regiones de distribución (ciudades conectadas por alguna cadena de rutas).</td></tr>
+    <tr><td><code>Trie</code>, <code>NodoTrie</code></td><td>Core</td><td>Autocompletado de nombres de ciudad y de códigos de rastreo.</td></tr>
+    <tr><td><code>ListaEnlazada&lt;T&gt;</code></td><td>Core</td><td>Lista propia para devolver varios resultados sin usar <code>List&lt;T&gt;</code>.</td></tr>
+    <tr><td><code>SistemaLogistica</code></td><td>Core</td><td>Integra las estructuras: registra, elimina, calcula rutas, carga y guarda archivos.</td></tr>
+    <tr><td><code>GeneradorReportes</code>, <code>Reporte</code></td><td>Core</td><td>Reportes para toma de decisiones y su exportación a .txt y .csv.</td></tr>
+    <tr><td><code>Program</code></td><td>Consola</td><td>Menú de consola e impresión de los resultados.</td></tr>
+    <tr><td><code>FormPrincipal</code> y pestañas</td><td>GUI</td><td>Ventana principal, menú Archivo y una pestaña por cada parte del sistema.</td></tr>
+    <tr><td><code>PanelMapa</code></td><td>GUI</td><td>Control propio que dibuja el grafo como mapa y resalta rutas y recorridos.</td></tr>
+    <tr><td><code>CuadroAutocompletado</code></td><td>GUI</td><td>Cuadro de texto que pide sugerencias al Trie mientras el usuario escribe.</td></tr>
+</table>
+
+<!-- 4 -->
+<h1>4. Datos de entrada y análisis léxico de los archivos</h1>
+<p>Los datos no están quemados en el código: se cargan desde archivos <code>.csv</code> o se ingresan por el menú. La carpeta
+predeterminada es <code>datos/</code> en la raíz de la solución; el método <code>SistemaLogistica.CarpetaDatosPorDefecto()</code> la encuentra
+subiendo desde la carpeta del ejecutable hasta hallar <code>LogisticaEnvios.sln</code>. Por eso «Guardar» escribe en los archivos del
+proyecto y no en la copia que se genera dentro de <code>bin</code>. Si la solución no se encuentra (por ejemplo, si se copió solo el
+ejecutable), se usa la carpeta <code>datos</code> que está junto al ejecutable.</p>
+<h2>4.1 Formato de los archivos</h2>
+<table>
+    <tr><th>Archivo</th><th>Columnas</th><th>Ejemplo</th></tr>
+    <tr><td><code>ciudades.csv</code></td><td><code>nombre[,latitud,longitud]</code> — las coordenadas son opcionales y solo sirven para el mapa</td><td><code>Cobán,15.4708,-90.3711</code></td></tr>
+    <tr><td><code>rutas.csv</code></td><td><code>origen,destino,costo,tiempo,sentido</code> — sentido <code>D</code> (doble) o <code>U</code> (único); si falta se toma <code>D</code></td><td><code>Cobán,Zacapa,95,3.5,U</code></td></tr>
+    <tr><td><code>envios.csv</code></td><td><code>codigo,remitente,destinatario,origen,destino</code></td><td><code>ENV-1003,Distribuidora El Sol,Tienda La Esquina,Cobán,Huehuetenango</code></td></tr>
+</table>
+<p>Los archivos deben cargarse en este orden: ciudades, rutas y envíos, porque una ruta necesita que sus ciudades existan y un
+envío necesita que existan sus ciudades de origen y destino. La opción «Cargar carpeta» lo hace automáticamente.</p>
+<h2>4.2 Análisis léxico y validación</h2>
+<p>Cada línea se procesa como una secuencia de <em>tokens</em> separados por comas. El proceso (Figura 6, sección 7) es:</p>
+<ol>
+    <li><strong>Existencia y lectura:</strong> se verifica con <code>File.Exists</code> y se leen todas las líneas en UTF-8; si hay un
+        error de lectura se informa sin detener el programa.</li>
+    <li><strong>Encabezado y líneas vacías:</strong> la primera línea se salta si empieza con el nombre de la primera columna
+        (<code>nombre</code>, <code>origen</code> o <code>codigo</code>); las líneas vacías se ignoran.</li>
+    <li><strong>Tokenización:</strong> <code>linea.Split(',')</code> separa los campos y a cada uno se le quitan los espacios.</li>
+    <li><strong>Validación de tokens:</strong> se revisa la cantidad de campos; los números (costo, tiempo, latitud y longitud) se
+        convierten con <code>double.TryParse</code> usando cultura invariante, aceptando punto o coma decimal; el sentido se
+        reconoce como <code>U</code> o, por omisión, doble sentido.</li>
+    <li><strong>Validación semántica:</strong> la estructura destino aplica sus reglas: ciudad repetida, ruta hacia sí misma, valores
+        negativos (Dijkstra no admite pesos negativos), ruta duplicada, código de envío repetido, ciudad inexistente, coordenadas
+        fuera de rango, comas dentro de un nombre.</li>
+    <li><strong>Reporte:</strong> cada línea con error se cuenta y se guarda como «Línea N: motivo». Al final se informa cuántos
+        registros se cargaron y cuántas líneas tuvieron error (<code>ResultadoCarga</code>).</li>
+</ol>
+<h2>4.3 Guardado</h2>
+<p><code>GuardarDatos</code> escribe los tres archivos con <code>StreamWriter</code> en UTF-8. Los números se escriben con cultura invariante
+(punto decimal) para que el archivo se pueda volver a leer en cualquier computadora. Una ruta de ida y vuelta con los mismos
+valores se guarda en una sola línea con <code>D</code>; si la ida y la vuelta tienen valores distintos, se guardan como dos rutas
+<code>U</code>.</p>
+
+<!-- 5 -->
+<h1>5. Estructuras de datos implementadas</h1>
+
+<h2>5.1 Tabla Hash <span class="chip hash">TablaHash.cs</span></h2>
+<h3>Uso en el problema</h3>
+<p>Guarda todos los envíos usando como clave el código de rastreo. La operación más frecuente del sistema es localizar un envío
+exacto (rastreo, búsqueda, eliminación y validación de códigos repetidos), y la tabla hash la resuelve en O(1) en promedio.</p>
+<h3>Implementación</h3>
+<ul>
+    <li><strong>Arreglos:</strong> <code>Envio?[] tabla</code> guarda los envíos y <code>bool[] eliminado</code> marca las posiciones
+        borradas. Tamaño inicial: 7.</li>
+    <li><strong>Función hash:</strong> método de Horner sobre los caracteres del código, reduciendo módulo el tamaño en cada paso
+        para no desbordar el entero: <code>h(k) = k mod m</code>.</li>
+    <li><strong>Colisiones:</strong> direccionamiento abierto con <strong>sondeo lineal</strong>: si la posición está ocupada se prueba
+        <code>(h + 1) mod m</code>, <code>(h + 2) mod m</code>, etc.</li>
+    <li><strong>Eliminación:</strong> la posición se vacía y se marca como ELIMINADA; así la búsqueda de otros códigos no se corta en
+        ese hueco. Una nueva inserción puede reutilizarla.</li>
+    <li><strong>Rehashing:</strong> si al insertar el factor de carga proyectado supera 0.70, el tamaño pasa al primer tamaño válido
+        mayor o igual a <code>2m + 1</code> y se reinsertan todos los envíos (las marcas de eliminado desaparecen). Secuencia de
+        tamaños: 7 → 17 → 37 → 79 → 163…</li>
+    <li><strong>Tamaño válido:</strong> el tamaño es siempre <strong>primo</strong> y además <code>31 mod m</code> no puede ser 0 ni 1. Si fuera 0
+        (m = 31), la posición dependería solo del último carácter del código; si fuera 1 (m = 3, 5, 15…), dependería solo de la suma
+        de los caracteres. En ambos casos códigos parecidos como <code>ENV-1001</code> y <code>ENV-1010</code> chocarían mucho más.</li>
+</ul>
+<pre><code>private const int Base = 31;
+
+private int FuncionHash(string codigo)
+{
+    int valor = 0;
+    foreach (char c in codigo)
+    {
+        valor = (valor * Base + c) % tamanio;      // método de Horner módulo m
+    }
+    return valor;
+}
+
+private static int TamanioValido(int n)            // primer primo válido &gt;= n
+{
+    if (n &lt; 3) n = 3;
+    while (!EsPrimo(n) || Base % n == 0 || Base % n == 1)
+    {
+        n++;
+    }
+    return n;
+}
+
+public int BuscarPosicion(string codigo)
+{
+    int indiceInicial = FuncionHash(codigo);
+    for (int intento = 0; intento &lt; tamanio; intento++)        // sondeo lineal
+    {
+        int indice = (indiceInicial + intento) % tamanio;
+        if (tabla[indice] != null &amp;&amp; tabla[indice]!.CodigoRastreo == codigo) return indice;
+        if (tabla[indice] == null &amp;&amp; !eliminado[indice]) return -1;   // nunca se usó: no existe
+    }
+    return -1;
+}</code></pre>
+<h3>Operaciones y complejidad</h3>
+<table>
+    <tr><th>Operación</th><th>Promedio</th><th>Peor caso</th><th>Comentario</th></tr>
+    <tr><td><code>Insertar(envio)</code></td><td>O(1) amortizado</td><td>O(n)</td><td>Incluye la verificación de código repetido; el rehashing O(n) ocurre pocas veces.</td></tr>
+    <tr><td><code>Buscar(codigo)</code> / <code>BuscarPosicion</code></td><td>O(1)</td><td>O(n)</td><td>El peor caso ocurre con muchas colisiones seguidas.</td></tr>
+    <tr><td><code>Eliminar(codigo)</code></td><td>O(1)</td><td>O(n)</td><td>Marca la posición como eliminada.</td></tr>
+    <tr><td><code>Rehashing()</code></td><td colspan="2">O(n + m)</td><td>Recorre la tabla anterior y reinserta. Buscar el siguiente primo cuesta O(√m) por candidato, despreciable frente a la reinserción.</td></tr>
+    <tr><td><code>ObtenerEnvios()</code> / impresión</td><td colspan="2">O(m)</td><td>Recorre todas las posiciones.</td></tr>
+    <tr><td><code>FactorCarga()</code></td><td colspan="2">O(1)</td><td>cantidad / tamaño.</td></tr>
+</table>
+<h3>Comparación con .NET</h3>
+<p><code>Dictionary&lt;string, Envio&gt;</code> ofrece las mismas complejidades promedio (O(1)) y también crece a tamaños primos, pero
+resuelve colisiones con encadenamiento. La implementación propia muestra explícitamente el factor de carga, las colisiones y
+el rehashing. En una simulación con 20 códigos consecutivos (<code>ENV-1001</code> a <code>ENV-1020</code>), usar tamaños primos válidos en
+lugar de <code>2m + 1</code> (que llegaba a m = 31) bajó el promedio de posiciones revisadas por búsqueda de 6.0 a 2.35 y el peor caso de
+20 a 10. Una lista (<code>List&lt;Envio&gt;</code>) necesitaría O(n) por búsqueda y un <code>SortedDictionary</code> O(log n).</p>
+
+<h2 class="salto">5.2 Grafo <span class="chip grafo">Grafo.cs</span></h2>
+<h3>Uso en el problema</h3>
+<p>Representa la red de transporte: cada ciudad es un vértice y cada ruta es una arista con dos pesos, costo y tiempo. Es
+<strong>dirigido</strong> porque existen rutas de un solo sentido; una ruta de doble sentido se guarda como dos aristas. Sobre él se
+ejecutan BFS, DFS y Dijkstra (por costo para la ruta más económica o por tiempo para la más rápida).</p>
+<h3>Implementación</h3>
+<ul>
+    <li><strong>Vértices:</strong> arreglo <code>string[] ciudades</code> con arreglos paralelos <code>latitudes</code> y <code>longitudes</code>
+        (<code>double.NaN</code> = sin coordenadas). Capacidad inicial 10; se duplica al llenarse.</li>
+    <li><strong>Aristas:</strong> lista de adyacencia propia: <code>Arista?[] adyacencia</code>, donde <code>adyacencia[i]</code> apunta a la
+        primera arista que sale de la ciudad <code>i</code>; cada <code>Arista</code> guarda destino, costo, tiempo y la siguiente arista.</li>
+    <li><strong>BFS:</strong> usa <code>Queue&lt;int&gt;</code> solo para el orden de visita y un arreglo <code>visitados</code>. Devuelve el orden
+        y el estado de la cola después de cada visita.</li>
+    <li><strong>DFS:</strong> recursivo, con arreglo de visitados.</li>
+    <li><strong>Dijkstra:</strong> arreglos <code>distancias</code>, <code>anteriores</code> y <code>visitados</code>. En cada paso se elige la
+        ciudad no visitada con menor distancia recorriendo el arreglo (no se permite <code>PriorityQueue</code>), se relajan sus
+        aristas y al final se reconstruye el camino con <code>anteriores</code>.</li>
+</ul>
+<pre><code>for (int paso = 0; paso &lt; cantidad; paso++)
+{
+    int actual = -1;                                   // ciudad no visitada más cercana
+    double menorDistancia = double.MaxValue;
+    for (int i = 0; i &lt; cantidad; i++)
+        if (!visitados[i] &amp;&amp; distancias[i] &lt; menorDistancia) { menorDistancia = distancias[i]; actual = i; }
+    if (actual == -1) break;                           // no quedan ciudades alcanzables
+    visitados[actual] = true;
+
+    for (Arista? a = adyacencia[actual]; a != null; a = a.Siguiente)   // relajación
+    {
+        double nueva = distancias[actual] + (porCosto ? a.Costo : a.Tiempo);
+        if (nueva &lt; distancias[a.Destino]) { distancias[a.Destino] = nueva; anteriores[a.Destino] = actual; }
+    }
+}</code></pre>
+<h3>Operaciones y complejidad</h3>
+<p>V = número de ciudades, E = número de aristas, g = grado de salida de la ciudad.</p>
+<table>
+    <tr><th>Operación</th><th>Complejidad</th><th>Comentario</th></tr>
+    <tr><td><code>AgregarCiudad</code></td><td>O(V)</td><td>Por la verificación de nombre repetido; el crecimiento del arreglo es O(1) amortizado.</td></tr>
+    <tr><td><code>BuscarIndice(nombre)</code></td><td>O(V)</td><td>Recorrido lineal sin distinguir mayúsculas.</td></tr>
+    <tr><td><code>AgregarRuta</code></td><td>O(g)</td><td>Revisa que no exista y la agrega al final de la lista.</td></tr>
+    <tr><td><code>BuscarArista</code> / <code>EliminarRuta</code></td><td>O(g)</td><td>Recorre la lista de adyacencia del origen.</td></tr>
+    <tr><td><code>BFS</code> / <code>DFS</code></td><td>O(V + E)</td><td>Cada ciudad y cada arista se visita una vez.</td></tr>
+    <tr><td><code>Dijkstra</code></td><td>O(V² + E) = O(V²)</td><td>Selección lineal del mínimo en cada uno de los V pasos.</td></tr>
+    <tr><td>Memoria</td><td>O(V + E)</td><td>Lista de adyacencia.</td></tr>
+</table>
+<h3>Comparación con .NET</h3>
+<p>Con <code>List&lt;List&lt;Arista&gt;&gt;</code> las complejidades serían iguales. Con <code>Dictionary&lt;string, int&gt;</code> para traducir
+nombres a índices, <code>BuscarIndice</code> pasaría de O(V) a O(1). Con <code>PriorityQueue</code> (montículo binario), Dijkstra bajaría a
+O((V + E) log V), lo que conviene en grafos grandes y dispersos; para una red de decenas de ciudades O(V²) es suficiente. Se
+eligió lista de adyacencia y no matriz porque las redes de carreteras son dispersas (E ≈ 2V): la matriz usaría O(V²) de memoria
+y recorrer los vecinos costaría O(V).</p>
+
+<h2 class="salto">5.3 Union-Find <span class="chip uf">UnionFind.cs</span></h2>
+<h3>Uso en el problema</h3>
+<p>Agrupa las ciudades en <strong>regiones de distribución</strong>: dos ciudades están en la misma región si existe alguna cadena de
+rutas entre ellas. Se consulta en tres momentos:</p>
+<ul>
+    <li>al <strong>registrar una ruta</strong>, para avisar si las ciudades ya estaban en la misma región o si la ruta une dos regiones;</li>
+    <li><strong>antes de ejecutar Dijkstra</strong>: si las ciudades están en regiones distintas no existe ningún camino y Dijkstra no se
+        ejecuta;</li>
+    <li>al <strong>registrar un envío</strong>, para advertir que por ahora no hay ruta disponible.</li>
+</ul>
+<h3>Implementación</h3>
+<ul>
+    <li>Arreglos <code>int[] padre</code> y <code>int[] rango</code>; cada ciudad usa el mismo índice que tiene en el grafo.</li>
+    <li><strong>Find con compresión de camino:</strong> cada elemento recorrido queda apuntando directamente a la raíz.</li>
+    <li><strong>Union por rango:</strong> el árbol de menor rango se cuelga del de mayor rango; si empatan, la raíz del primero gana y
+        su rango aumenta.</li>
+    <li><strong>Eliminación de rutas:</strong> Union-Find no puede separar conjuntos, por eso al eliminar una ruta se reinician los
+        conjuntos (<code>Reiniciar</code>) y se vuelven a unir recorriendo todas las aristas del grafo.</li>
+</ul>
+<pre><code>public int Find(int x)
+{
+    if (padre[x] != x)
+        padre[x] = Find(padre[x]);          // compresión de camino
+    return padre[x];
+}
+
+public bool Union(int x, int y)
+{
+    int raizX = Find(x), raizY = Find(y);
+    if (raizX == raizY) return false;       // ya estaban en la misma región
+    if (rango[raizX] &lt; rango[raizY]) padre[raizX] = raizY;
+    else if (rango[raizX] &gt; rango[raizY]) padre[raizY] = raizX;
+    else { padre[raizY] = raizX; rango[raizX]++; }
+    return true;
+}</code></pre>
+<h3>Operaciones y complejidad</h3>
+<table>
+    <tr><th>Operación</th><th>Complejidad</th><th>Comentario</th></tr>
+    <tr><td><code>Find</code>, <code>Union</code>, <code>EstanConectados</code></td><td>O(α(n)) amortizado</td><td>α es la inversa de Ackermann: menor que 5 para cualquier n práctico.</td></tr>
+    <tr><td><code>AgregarElemento</code></td><td>O(1) amortizado</td><td>Los arreglos se duplican al llenarse.</td></tr>
+    <tr><td><code>ContarRegiones</code>, <code>NumerarRegiones</code></td><td>O(n · α(n))</td><td>Un Find por elemento.</td></tr>
+    <tr><td><code>Reiniciar</code></td><td>O(n)</td><td>Cada elemento vuelve a ser su propia raíz.</td></tr>
+    <tr><td>Reconstrucción al eliminar una ruta</td><td>O(n + E · α(n))</td><td>Una unión por cada arista del grafo.</td></tr>
+</table>
+<h3>Comparación con .NET</h3>
+<p>.NET no tiene una estructura de conjuntos disjuntos. Las alternativas serían ejecutar un BFS por cada consulta, O(V + E), o
+mantener un <code>HashSet&lt;int&gt;</code> por región y fusionarlos, O(n) por unión. Union-Find responde en tiempo prácticamente constante.</p>
+<div class="nota"><p><strong>Detalle importante:</strong> Union-Find trata las rutas como no dirigidas (solo indica si hay conexión). Dos ciudades
+pueden estar en la misma región y aun así no ser alcanzables por culpa de rutas de un solo sentido. El sistema lo detecta porque
+Dijkstra devuelve un camino nulo, y lo informa con un mensaje propio (por ejemplo, San Benito → Poptún en los datos de ejemplo).</p></div>
+
+<h2 class="salto">5.4 Trie <span class="chip trie">Trie.cs</span></h2>
+<h3>Uso en el problema</h3>
+<p>Sugiere nombres de ciudad (y códigos de rastreo) a partir de las primeras letras que escribe el usuario. Hay dos tries: uno de
+ciudades y uno de códigos. En la consola, si el usuario escribe un nombre incompleto, se muestran las sugerencias numeradas; en la
+interfaz gráfica, las sugerencias aparecen en una lista debajo del cuadro mientras se escribe.</p>
+<h3>Implementación</h3>
+<ul>
+    <li>Cada <code>NodoTrie</code> guarda una letra, <code>PrimerHijo</code>, <code>Hermano</code>, <code>EsFinPalabra</code> y
+        <code>PalabraOriginal</code>. Como no se permite <code>Dictionary</code>, los hijos forman una lista enlazada
+        (representación «primer hijo – siguiente hermano»).</li>
+    <li>Los hermanos se mantienen <strong>ordenados por letra</strong>; por eso las sugerencias salen en orden alfabético y la búsqueda
+        de un hijo se detiene en cuanto se pasa la letra.</li>
+    <li>Las claves se guardan en minúsculas («que» encuentra «Quetzaltenango») y el texto original se conserva en el nodo final para
+        mostrarlo con mayúsculas y tildes.</li>
+    <li><code>Eliminar</code> desmarca el fin de palabra y quita los nodos que quedan sin uso, subiendo por el camino guardado.</li>
+</ul>
+<h3>Operaciones y complejidad</h3>
+<p>L = largo de la palabra o prefijo, σ = cantidad máxima de hermanos que se revisan en un nivel (a lo sumo el tamaño del
+alfabeto usado), K = cantidad de nodos debajo del prefijo.</p>
+<table>
+    <tr><th>Operación</th><th>Complejidad</th><th>Comentario</th></tr>
+    <tr><td><code>Insertar</code></td><td>O(L · σ)</td><td>Reutiliza los nodos de los prefijos comunes.</td></tr>
+    <tr><td><code>Buscar</code>, <code>EmpiezaCon</code></td><td>O(L · σ)</td><td>No depende de cuántas palabras hay.</td></tr>
+    <tr><td><code>SugerirPorPrefijo</code></td><td>O(L · σ + K)</td><td>Baja hasta el prefijo y recolecta el subárbol en orden.</td></tr>
+    <tr><td><code>Eliminar</code></td><td>O(L · σ)</td><td>Incluye la limpieza de nodos sin uso.</td></tr>
+    <tr><td>Memoria</td><td>O(total de caracteres)</td><td>Los prefijos comunes se comparten.</td></tr>
+</table>
+<h3>Comparación con .NET</h3>
+<p>Con una <code>List&lt;string&gt;</code> y <code>StartsWith</code> cada sugerencia costaría O(N · L), revisando todas las palabras.
+<code>SortedSet&lt;string&gt;.GetViewBetween</code> lograría O(log N + K). En el Trie el costo depende del largo del prefijo y de los resultados,
+no del total de palabras. Usar un arreglo o diccionario de hijos por nodo daría acceso O(1) a cada hijo a cambio de más memoria;
+la lista ordenada de hermanos usa solo la memoria necesaria.</p>
+
+<h2>5.5 Lista enlazada de apoyo <span class="chip">ListaEnlazada.cs</span></h2>
+<p>Lista simplemente enlazada con referencia a la cola. Se usa para devolver varios resultados (sugerencias del Trie, envíos de la
+tabla hash, mensajes de carga, filas de reportes, orden de recorridos) sin usar <code>List&lt;T&gt;</code>. <code>Agregar</code> es O(1) y
+<code>ConvertirArreglo</code> es O(n).</p>
+
+<!-- 6 -->
+<h1>6. Integración de las estructuras</h1>
+<p>La clase <code>SistemaLogistica</code> coordina las cuatro estructuras dentro de un mismo flujo. Ninguna estructura queda aislada:</p>
+<table>
+    <tr><th>Operación</th><th>Estructuras que participan (en orden)</th></tr>
+    <tr><td>Registrar ciudad</td><td><span class="chip grafo">Grafo</span> agrega el vértice → <span class="chip uf">Union-Find</span> crea su región → <span class="chip trie">Trie</span> guarda el nombre.</td></tr>
+    <tr><td>Registrar ruta</td><td><span class="chip trie">Trie</span> sugiere las ciudades → <span class="chip uf">Union-Find</span> informa si ya estaban conectadas → <span class="chip grafo">Grafo</span> agrega la arista (y la vuelta) → <span class="chip uf">Union-Find</span> une las regiones.</td></tr>
+    <tr><td>Eliminar ruta</td><td><span class="chip grafo">Grafo</span> quita la arista → <span class="chip uf">Union-Find</span> se reconstruye a partir de las aristas.</td></tr>
+    <tr><td>Registrar envío</td><td><span class="chip hash">Tabla Hash</span> valida que el código no exista → <span class="chip grafo">Grafo</span> valida las ciudades → <span class="chip hash">Tabla Hash</span> inserta → <span class="chip trie">Trie</span> guarda el código → <span class="chip uf">Union-Find</span> advierte si no hay ruta.</td></tr>
+    <tr><td>Eliminar envío</td><td><span class="chip hash">Tabla Hash</span> elimina → <span class="chip trie">Trie</span> quita el código.</td></tr>
+    <tr><td><strong>Rastrear envío (flujo integrado)</strong></td><td><span class="chip trie">Trie</span> sugiere el código → <span class="chip hash">Tabla Hash</span> localiza el envío → <span class="chip uf">Union-Find</span> valida la conectividad → <span class="chip grafo">Grafo</span> ejecuta Dijkstra por costo y por tiempo.</td></tr>
+    <tr><td>Reportes</td><td>Usan las cuatro estructuras (sección 10).</td></tr>
+</table>
+<p>El cálculo de rutas aplica la regla del enunciado: Union-Find valida la conectividad <strong>antes</strong> de ejecutar Dijkstra.</p>
+<pre><code>public ResultadoRuta CalcularRuta(string origen, string destino, bool porCosto)
+{
+    ...
+    if (!Regiones.EstanConectados(o, d))          // Union-Find
+    {
+        resultado.Mensaje = "... pertenecen a regiones distintas ... no se ejecuta Dijkstra.";
+        return resultado;
+    }
+    resultado.MismaRegion = true;
+    resultado.Dijkstra = Mapa.Dijkstra(o, d, porCosto);   // Grafo
+    resultado.Camino = resultado.Dijkstra.Camino;          // null si las rutas de un solo sentido no permiten llegar
+    ...
+}</code></pre>
+
+<!-- 7 -->
+<h1>7. Diagramas de flujo</h1>
+<h2>7.1 Flujo general del programa (menú de consola)</h2>
+<figure>
+    <img class="diagrama medio" src="diagramas/flujo_general.svg" alt="Flujo general">
+    <figcaption>Figura 2. Ciclo del menú principal. Cada submenú repite el mismo patrón hasta que el usuario elige 0.</figcaption>
+</figure>
+
+<h2 class="salto">7.2 Flujo integrado: rastrear un envío</h2>
+<figure>
+    <img class="diagrama alto" src="diagramas/flujo_rastreo.svg" alt="Flujo de rastreo">
+    <figcaption>Figura 3. Las cuatro estructuras trabajando en un mismo flujo.</figcaption>
+</figure>
+
+<h2 class="salto">7.3 Registrar una ruta</h2>
+<figure>
+    <img class="diagrama alto" src="diagramas/flujo_ruta.svg" alt="Flujo de registrar ruta">
+    <figcaption>Figura 4. Antes de asignar la ruta se consulta el Union-Find.</figcaption>
+</figure>
+
+<h2 class="salto">7.4 Algoritmo de Dijkstra</h2>
+<figure>
+    <img class="diagrama medio" src="diagramas/flujo_dijkstra.svg" alt="Flujo de Dijkstra">
+    <figcaption>Figura 5. Dijkstra con selección lineal del mínimo; el peso es el costo o el tiempo según el criterio.</figcaption>
+</figure>
+
+<h2 class="salto">7.5 Carga de un archivo CSV</h2>
+<figure>
+    <img class="diagrama alto" src="diagramas/flujo_carga.svg" alt="Flujo de carga">
+    <figcaption>Figura 6. Lectura, tokenización y validación de cada línea.</figcaption>
+</figure>
+
+<!-- 8 -->
+<h1>8. Diagramas de clases</h1>
+<h2>8.1 Biblioteca LogisticaEnvios.Core</h2>
+<figure>
+    <img class="diagrama" src="diagramas/clases_core.svg" alt="Diagrama de clases Core">
+    <figcaption>Figura 7. Estructuras, integración, resultados y reportes.</figcaption>
+</figure>
+<h2 class="salto">8.2 Interfaz gráfica LogisticaEnvios.GUI</h2>
+<figure>
+    <img class="diagrama" src="diagramas/clases_gui.svg" alt="Diagrama de clases GUI">
+    <figcaption>Figura 8. Ventana principal, pestañas y controles propios.</figcaption>
+</figure>
+<p>La consola (<code>Program</code>) es una clase estática con un campo <code>SistemaLogistica sistema</code>, un método por menú y las
+funciones de impresión que convierten los resultados en texto.</p>
+
+<!-- 9 -->
+<h1>9. Análisis de complejidad (Big-O) y comparación con .NET</h1>
+<p>Resumen de las operaciones principales. n = envíos, m = tamaño de la tabla hash, V = ciudades, E = aristas, g = grado de
+salida, L = largo del texto, σ = hermanos revisados por nivel, K = nodos del resultado.</p>
+<table>
+    <tr><th>Estructura</th><th>Operación</th><th>Implementación propia</th><th>Alternativa nativa de .NET</th></tr>
+    <tr><td rowspan="3">Tabla Hash</td><td>Insertar</td><td>O(1) promedio · O(n) peor</td><td><code>Dictionary.Add</code>: O(1) promedio</td></tr>
+    <tr><td>Buscar</td><td>O(1) promedio · O(n) peor</td><td><code>Dictionary.TryGetValue</code>: O(1) promedio · <code>List.Find</code>: O(n)</td></tr>
+    <tr><td>Eliminar</td><td>O(1) promedio · O(n) peor</td><td><code>Dictionary.Remove</code>: O(1) promedio</td></tr>
+    <tr><td rowspan="5">Grafo</td><td>Buscar ciudad por nombre</td><td>O(V)</td><td><code>Dictionary&lt;string,int&gt;</code>: O(1)</td></tr>
+    <tr><td>Agregar / buscar / eliminar ruta</td><td>O(g)</td><td><code>List&lt;Arista&gt;</code>: O(g)</td></tr>
+    <tr><td>BFS / DFS</td><td>O(V + E)</td><td>O(V + E) (igual)</td></tr>
+    <tr><td>Dijkstra</td><td>O(V²)</td><td><code>PriorityQueue</code>: O((V + E) log V)</td></tr>
+    <tr><td>Memoria</td><td>O(V + E)</td><td>Matriz de adyacencia: O(V²)</td></tr>
+    <tr><td rowspan="3">Union-Find</td><td>Find / Union</td><td>O(α(n)) amortizado</td><td>Sin equivalente; BFS por consulta: O(V + E)</td></tr>
+    <tr><td>¿Misma región?</td><td>O(α(n))</td><td><code>HashSet</code> por región: O(1) consulta, O(n) por unión</td></tr>
+    <tr><td>Reconstruir tras eliminar ruta</td><td>O(V + E · α(V))</td><td>—</td></tr>
+    <tr><td rowspan="3">Trie</td><td>Insertar / Buscar</td><td>O(L · σ)</td><td><code>HashSet&lt;string&gt;</code>: O(L) promedio (sin prefijos)</td></tr>
+    <tr><td>Sugerir por prefijo</td><td>O(L · σ + K)</td><td><code>List</code> + <code>StartsWith</code>: O(N · L) · <code>SortedSet</code>: O(log N + K)</td></tr>
+    <tr><td>Eliminar</td><td>O(L · σ)</td><td><code>List.Remove</code>: O(N)</td></tr>
+    <tr><td>Lista enlazada</td><td>Agregar / a arreglo</td><td>O(1) / O(n)</td><td><code>List.Add</code>: O(1) amortizado / <code>ToArray</code>: O(n)</td></tr>
+</table>
+<h2>9.1 Costo de los flujos completos</h2>
+<table>
+    <tr><th>Flujo</th><th>Complejidad</th></tr>
+    <tr><td>Rastrear un envío</td><td>Trie O(L · σ + K) + Tabla Hash O(1) + Union-Find O(α(V)) + 2 × Dijkstra O(V²) = <strong>O(V²)</strong></td></tr>
+    <tr><td>Registrar ruta</td><td>2 × BuscarIndice O(V) + Union-Find O(α(V)) + AgregarRuta O(g) = <strong>O(V)</strong></td></tr>
+    <tr><td>Registrar envío</td><td>Tabla Hash O(1) + 2 × BuscarIndice O(V) + Trie O(L · σ) = <strong>O(V)</strong> promedio</td></tr>
+    <tr><td>Cargar archivo de rutas con R líneas</td><td><strong>O(R · V)</strong></td></tr>
+</table>
+
+<!-- 10 -->
+<h1>10. Reportes para toma de decisiones</h1>
+<p>La clase <code>GeneradorReportes</code> arma cuatro reportes. Cada uno es una tabla (columnas y filas) más un resumen con conclusiones
+y recomendaciones. Se muestran en la consola (opción 8) y en la pestaña «Reportes», y se exportan a <code>.txt</code> (todos juntos) o
+a <code>.csv</code> (uno por archivo, con comillas cuando un campo tiene comas y UTF-8 con BOM para que Excel muestre las tildes).</p>
+<table>
+    <tr><th>Reporte</th><th>Qué calcula</th><th>Estructuras</th><th>Complejidad</th></tr>
+    <tr><td>Costo y tiempo estimado por envío</td><td>Ruta más económica y más rápida de cada envío, totales, promedio, envío más costoso y ahorro de tiempo posible.</td><td>Tabla Hash, Union-Find, Grafo</td><td>O(n · V²)</td></tr>
+    <tr><td>Envíos sin ruta posible</td><td>Envíos que no se pueden despachar, motivo (regiones distintas o rutas de un solo sentido) y la conexión más corta sugerida entre regiones (fórmula del haverseno con las coordenadas).</td><td>Tabla Hash, Union-Find, Grafo</td><td>O(n · V² + V²)</td></tr>
+    <tr><td>Envíos por región</td><td>Por región: ciudades, envíos que salen, llegan, internos y hacia otra región.</td><td>Union-Find, Tabla Hash</td><td>O(n · V)</td></tr>
+    <tr><td>Ciudades con más conexiones</td><td>Ranking por ciudades vecinas, rutas de entrada y salida y envíos; sugiere el centro de distribución y señala ciudades que dependen de una sola conexión o a las que no llega ninguna ruta.</td><td>Grafo, Union-Find, Tabla Hash</td><td>O(V² · g)</td></tr>
+</table>
+<p>Los envíos se ordenan por código y las ciudades por conexiones con <strong>ordenamiento por inserción</strong> propio, O(k²), sin usar
+<code>Array.Sort</code> ni <code>List.Sort</code>.</p>
+
+<!-- 11 -->
+<h1>11. Interfaz gráfica</h1>
+<p>La interfaz está hecha con Windows Forms. Los formularios siguen el formato del diseñador de Visual Studio
+(<code>*.Designer.cs</code>), así que se pueden abrir y modificar visualmente.</p>
+<ul>
+    <li><strong>FormPrincipal:</strong> contiene el menú Archivo (cargar, guardar, vaciar), la barra de estado y siete pestañas. Mantiene
+        un único <code>SistemaLogistica</code> que comparte con todas las pestañas.</li>
+    <li><strong>PestanaBase:</strong> clase base de las pestañas. Cuando una pestaña cambia los datos llama a <code>AvisarCambio()</code>, la
+        ventana recibe el evento <code>DatosCambiados</code> y ejecuta <code>Refrescar()</code> en todas, para que lo registrado en una se vea
+        en las demás.</li>
+    <li><strong>PanelMapa:</strong> control dibujado con GDI+. Convierte latitud y longitud en posiciones de pantalla (escala por eje),
+        separa las ciudades que quedan muy juntas, ubica los nombres donde no se encimen, pinta cada ciudad con el color de su
+        región (Union-Find), dibuja flechas en las rutas de un solo sentido, resalta caminos de Dijkstra y numera los recorridos.</li>
+    <li><strong>CuadroAutocompletado:</strong> en cada cambio de texto consulta <code>SugerirPorPrefijo</code> del Trie y muestra el resultado
+        en una lista flotante. No se usa <code>AutoCompleteCustomSource</code> de WinForms porque guarda las palabras en una colección
+        nativa y se saltaría el Trie.</li>
+</ul>
+<table>
+    <tr><th>Pestaña</th><th>Estructuras que muestra</th></tr>
+    <tr><td>Rastrear envío</td><td>Las cuatro, paso a paso, con las dos rutas en el mapa.</td></tr>
+    <tr><td>Envíos · Tabla Hash</td><td>Cada posición de la tabla (ocupada, eliminada o vacía), factor de carga, rehashing, h(k) y sondeo.</td></tr>
+    <tr><td>Ciudades y rutas · Grafo</td><td>Registro de ciudades y rutas, BFS y DFS numerados en el mapa, lista de adyacencia.</td></tr>
+    <tr><td>Ruta óptima · Dijkstra</td><td>Union-Find + Dijkstra, tabla de distancias y anteriores, camino en el mapa.</td></tr>
+    <tr><td>Regiones · Union-Find</td><td>Regiones con su color, arreglos <code>padre</code> y <code>rango</code>, verificación con Find.</td></tr>
+    <tr><td>Autocompletado · Trie</td><td>Búsqueda por prefijo y el árbol del Trie tal como está en memoria.</td></tr>
+    <tr><td>Reportes</td><td>Los cuatro reportes con exportación.</td></tr>
+</table>
+
+<!-- 12 -->
+<h1>12. Uso de tipos nativos de .NET</h1>
+<p>El enunciado prohíbe usar colecciones nativas para resolver la lógica de las estructuras. El uso de tipos nativos se limita a:</p>
+<table>
+    <tr><th>Tipo nativo</th><th>Dónde</th><th>Para qué</th></tr>
+    <tr><td>Arreglos (<code>T[]</code>)</td><td>Todas las estructuras</td><td>Almacenamiento base; no son colecciones dinámicas.</td></tr>
+    <tr><td><code>Queue&lt;int&gt;</code></td><td><code>Grafo.BFS</code></td><td>Únicamente el orden de visita del BFS (permitido por el enunciado).</td></tr>
+    <tr><td><code>string</code>, <code>StringBuilder</code>, <code>Split</code>, <code>Trim</code>, <code>ToLower</code></td><td>Todo el proyecto</td><td>Manejo de cadenas.</td></tr>
+    <tr><td><code>File</code>, <code>StreamWriter</code>, <code>Directory</code>, <code>Path</code></td><td>Carga, guardado y exportación</td><td>Lectura y escritura de archivos.</td></tr>
+    <tr><td><code>double.TryParse</code>, <code>CultureInfo</code>, <code>Math</code></td><td>Carga y reportes</td><td>Conversión de números y cálculos.</td></tr>
+    <tr><td>Controles de WinForms (<code>DataGridView</code>, <code>ListBox</code>, <code>TreeView</code>)</td><td>Interfaz gráfica</td><td>Solo <strong>muestran</strong> datos que ya calcularon las estructuras propias.</td></tr>
+</table>
+
+<!-- 13 -->
+<h1>13. Limitaciones conocidas y mejoras posibles</h1>
+<table>
+    <tr><th>Tema</th><th>Situación actual</th><th>Mejora posible</th></tr>
+    <tr><td>Dijkstra</td><td>O(V²) por la selección lineal del mínimo.</td><td>Montículo binario propio: O((V + E) log V).</td></tr>
+    <tr><td>Búsqueda de ciudad por nombre</td><td>O(V) lineal.</td><td>Una segunda tabla hash de nombre → índice: O(1).</td></tr>
+    <tr><td>Eliminar ruta</td><td>Union-Find se reconstruye completo, O(V + E · α).</td><td>Aceptable para el tamaño del problema.</td></tr>
+    <tr><td>Eliminar ciudad</td><td>No se ofrece, porque los índices del grafo y del Union-Find son compartidos.</td><td>Marcar la ciudad como inactiva en lugar de borrarla.</td></tr>
+    <tr><td>Agrupamiento del sondeo lineal</td><td>Códigos consecutivos (ENV-3001, ENV-3002…) caen en posiciones consecutivas y forman bloques; es el comportamiento normal del sondeo lineal.</td><td>Sondeo cuadrático o doble hashing.</td></tr>
+</table>
+
+<!-- 14 -->
+<h1>14. Distribución de responsabilidades</h1>
+<p>Según el enunciado, cada integrante debe dominar al menos una de las estructuras obligatorias y poder defenderla
+individualmente. Completar esta tabla cuando el grupo reparta las estructuras, y actualizar también el comentario
+«Responsable» al inicio de cada archivo.</p>
+<table>
+    <tr><th>Componente</th><th>Archivo</th><th>Responsable</th></tr>
+    <tr><td>Tabla Hash</td><td><code>TablaHash.cs</code></td><td>Por definir</td></tr>
+    <tr><td>Grafo (BFS, DFS, Dijkstra)</td><td><code>Grafo.cs</code></td><td>Por definir</td></tr>
+    <tr><td>Union-Find</td><td><code>UnionFind.cs</code></td><td>Por definir</td></tr>
+    <tr><td>Trie</td><td><code>Trie.cs</code></td><td>Por definir</td></tr>
+    <tr><td>Integración y reportes</td><td><code>SistemaLogistica.cs</code>, <code>Reportes.cs</code></td><td>Por definir</td></tr>
+    <tr><td>Menú de consola</td><td><code>Program.cs</code> (Consola)</td><td>Por definir</td></tr>
+    <tr><td>Interfaz gráfica</td><td><code>LogisticaEnvios.GUI</code></td><td>Johann</td></tr>
+    <tr><td>Manual técnico y de usuario</td><td><code>docs/</code></td><td>Alexis</td></tr>
+</table>
+
+</body>
+</html>

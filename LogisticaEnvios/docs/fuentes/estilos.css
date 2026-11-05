@@ -1,0 +1,140 @@
+/* Estilos compartidos por el manual técnico y el manual de usuario.
+   Pensados para imprimir en tamaño carta (Microsoft Edge → PDF). */
+
+@page {
+    size: Letter;
+    margin: 2.1cm 2cm 2.2cm 2cm;
+
+    @bottom-right {
+        content: "Página " counter(page) " de " counter(pages);
+        font-family: "Segoe UI", Arial, sans-serif;
+        font-size: 8.5pt;
+        color: #64748b;
+    }
+}
+
+@page :first {
+    margin: 0;
+
+    @bottom-right { content: none; }
+    @bottom-left { content: none; }
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Calibri, Arial, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.5;
+    color: #1e293b;
+    background: #ffffff;
+}
+
+/* PORTADA */
+.portada {
+    height: 27.9cm;
+    padding: 2.6cm 2.4cm 2cm;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(160deg, #1e3a8a 0%, #1e40af 55%, #2563eb 100%);
+    color: #ffffff;
+    page-break-after: always;
+}
+.portada .institucion { font-size: 12pt; line-height: 1.6; opacity: 0.92; }
+.portada .institucion strong { font-size: 13.5pt; }
+.portada .centro { margin-top: auto; margin-bottom: auto; }
+.portada .etiqueta {
+    display: inline-block; font-size: 10pt; letter-spacing: 0.12em; text-transform: uppercase;
+    border: 1px solid rgba(255,255,255,0.6); padding: 3px 10px; border-radius: 3px;
+}
+.portada h1 {
+    font-size: 34pt; line-height: 1.15; margin: 14pt 0 8pt; border: none; color: #ffffff;
+    page-break-before: avoid; padding: 0;
+}
+.portada .subtitulo { font-size: 15pt; opacity: 0.95; }
+.portada table { width: auto; border: none; margin-top: 18pt; font-size: 11pt; color: #ffffff; }
+.portada td { border: none; padding: 2px 18px 2px 0; background: transparent !important; }
+.portada td:first-child { opacity: 0.8; }
+.portada .pie { font-size: 10pt; opacity: 0.85; }
+
+/* ÍNDICE */
+.indice h2 { margin-top: 0; }
+.indice ol { padding-left: 18pt; }
+.indice li { margin: 2pt 0; }
+.indice ol ol { list-style: none; padding-left: 14pt; color: #475569; font-size: 10pt; }
+
+/* TÍTULOS */
+h1 {
+    page-break-before: always;
+    font-size: 19pt;
+    color: #1e3a8a;
+    border-bottom: 2px solid #1e3a8a;
+    padding-bottom: 4pt;
+    margin: 0 0 12pt;
+}
+h2 { font-size: 13.5pt; color: #1e3a8a; margin: 16pt 0 6pt; page-break-after: avoid; }
+h3 { font-size: 11.5pt; color: #334155; margin: 12pt 0 4pt; page-break-after: avoid; }
+h4 { font-size: 10.5pt; color: #334155; margin: 10pt 0 2pt; page-break-after: avoid; }
+p { margin: 4pt 0 7pt; text-align: justify; }
+ul, ol { margin: 4pt 0 8pt; }
+li { margin: 2pt 0; }
+
+/* TABLAS */
+table { border-collapse: collapse; width: 100%; margin: 6pt 0 10pt; font-size: 9.4pt; page-break-inside: avoid; }
+th { background: #e2e8f0; text-align: left; font-weight: 600; }
+th, td { border: 1px solid #cbd5e1; padding: 4px 6px; vertical-align: top; }
+tr:nth-child(even) td { background: #f8fafc; }
+td.centro, th.centro { text-align: center; }
+
+/* CÓDIGO */
+code { font-family: Consolas, "Cascadia Mono", monospace; font-size: 9.2pt; background: #f1f5f9; padding: 0 3px; border-radius: 3px; }
+pre {
+    font-family: Consolas, "Cascadia Mono", monospace;
+    font-size: 8.6pt;
+    line-height: 1.38;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #1e40af;
+    padding: 7px 10px;
+    border-radius: 4px;
+    white-space: pre-wrap;
+    page-break-inside: avoid;
+    margin: 6pt 0 10pt;
+}
+pre.consola { background: #0f172a; color: #e2e8f0; border: none; border-left: 4px solid #22c55e; }
+pre.consola .usuario { color: #fde68a; font-weight: bold; }
+pre code { background: none; padding: 0; }
+
+/* FIGURAS */
+figure { margin: 8pt 0 12pt; text-align: center; page-break-inside: avoid; }
+figure img { max-width: 100%; border: 1px solid #e2e8f0; border-radius: 3px; }
+figure img.diagrama { border: none; }
+figure img.alto { max-height: 19cm; max-width: 100%; width: auto; }
+figure img.medio { max-height: 15cm; max-width: 100%; width: auto; }
+figure img.chico { max-width: 55%; }
+figcaption { font-size: 8.8pt; color: #64748b; margin-top: 4pt; }
+
+/* CAJAS DE NOTA */
+.nota, .aviso, .consejo {
+    padding: 6pt 10pt; margin: 8pt 0 10pt; border-radius: 4px; page-break-inside: avoid; font-size: 10pt;
+}
+.nota { border-left: 4px solid #2563eb; background: #eff6ff; }
+.aviso { border-left: 4px solid #d97706; background: #fffbeb; }
+.consejo { border-left: 4px solid #16a34a; background: #f0fdf4; }
+.nota p, .aviso p, .consejo p { margin: 2pt 0; }
+
+.tecla {
+    display: inline-block; font-family: "Segoe UI", sans-serif; font-size: 8.8pt; padding: 0 5px;
+    border: 1px solid #94a3b8; border-bottom-width: 2px; border-radius: 3px; background: #f8fafc;
+}
+.chip { display: inline-block; padding: 0 6px; border-radius: 3px; font-size: 9pt; }
+.chip.hash { background: #dbeafe; color: #1e40af; }
+.chip.grafo { background: #ffedd5; color: #9a3412; }
+.chip.uf { background: #fce7f3; color: #9d174d; }
+.chip.trie { background: #dcfce7; color: #166534; }
+
+.salto { page-break-before: always; }
+.sin-salto { page-break-inside: avoid; }

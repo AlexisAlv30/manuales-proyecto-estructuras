@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Manual de usuario · Logística de envíos</title>
+<link rel="stylesheet" href="estilos.css">
+<style>
+    @page {
+        @bottom-left {
+            content: "Logística de envíos · Manual de usuario";
+            font-family: "Segoe UI", Arial, sans-serif; font-size: 8.5pt; color: #64748b;
+        }
+    }
+    .portada { background: linear-gradient(160deg, #14532d 0%, #166534 50%, #15803d 100%); }
+    h1 { color: #14532d; border-bottom-color: #14532d; }
+    h2 { color: #166534; }
+</style>
+</head>
+<body>
+
+<!-- PORTADA -->
+<section class="portada">
+    <div class="institucion">
+        <strong>Facultad de Ingeniería</strong><br>
+        Ingeniería en Informática y Sistemas<br>
+        Área de Informática · Estructura de Datos II
+    </div>
+    <div class="centro">
+        <span class="etiqueta">Proyecto de laboratorio No. 2</span>
+        <h1>Manual de usuario</h1>
+        <div class="subtitulo">Sistema de logística de envíos: interfaz gráfica y menú de consola</div>
+        <table>
+            <tr><td>Escenario</td><td>Logística de envíos</td></tr>
+            <tr><td>Versión</td><td>1.0 · Windows</td></tr>
+            <tr><td>Integrantes</td><td>Ángel · Johann · Alexis</td></tr>
+            <tr><td>Fecha</td><td>Noviembre de 2026</td></tr>
+        </table>
+    </div>
+    <div class="pie">Instrucciones para cargar datos, registrar envíos, calcular rutas y generar reportes.</div>
+</section>
+
+<!-- ÍNDICE -->
+<section class="indice">
+    <h2>Contenido</h2>
+    <ol>
+        <li>¿Qué hace el sistema?</li>
+        <li>Instalación y primer inicio</li>
+        <li>Archivos de datos</li>
+        <li>Interfaz gráfica
+            <ol><li>Ventana principal · Menú Archivo · Cuadros con sugerencias · Las 7 pestañas</li></ol></li>
+        <li>Menú de consola
+            <ol><li>Menú principal y cada una de sus 8 opciones</li></ol></li>
+        <li>Mensajes del sistema y cómo resolverlos</li>
+        <li>Preguntas frecuentes</li>
+    </ol>
+</section>
+
+<!-- 1 -->
+<h1>1. ¿Qué hace el sistema?</h1>
+<p>El sistema ayuda a una empresa de paquetería a controlar sus envíos entre ciudades del país. Con él se puede:</p>
+<ul>
+    <li><strong>Registrar envíos</strong> con su código de rastreo, remitente, destinatario, ciudad de origen y ciudad de destino.</li>
+    <li><strong>Localizar un envío</strong> por su código de rastreo, escribiendo solo el inicio del código.</li>
+    <li><strong>Registrar ciudades y rutas</strong> de transporte con su costo (en quetzales) y su tiempo (en horas); una ruta puede ser
+        de doble sentido o de un solo sentido.</li>
+    <li><strong>Calcular la ruta más económica o la más rápida</strong> entre dos ciudades.</li>
+    <li><strong>Saber si dos ciudades pertenecen a la misma región de distribución</strong>, es decir, si existe alguna cadena de rutas
+        entre ellas.</li>
+    <li><strong>Obtener sugerencias</strong> de nombres de ciudad y de códigos mientras se escribe.</li>
+    <li><strong>Generar reportes</strong> para tomar decisiones: costo estimado de los envíos, envíos que no se pueden despachar,
+        movimiento por región y ciudades más conectadas.</li>
+</ul>
+<p>El sistema tiene dos formas de uso con las mismas funciones: una <strong>interfaz gráfica</strong> (ventana con pestañas y mapa) y un
+<strong>menú de consola</strong>. Este manual explica las dos.</p>
+
+<!-- 2 -->
+<h1>2. Instalación y primer inicio</h1>
+<h2>2.1 Requisitos</h2>
+<ul>
+    <li>Windows 10 u 11.</li>
+    <li>.NET 8 o una versión más nueva (para compilar se necesita el SDK de .NET).</li>
+    <li>Recomendado: Visual Studio 2022 o posterior.</li>
+</ul>
+<h2>2.2 Abrir el programa desde Visual Studio</h2>
+<ol>
+    <li>Abra el archivo <code>LogisticaEnvios.sln</code>.</li>
+    <li>En el Explorador de soluciones, haga clic derecho sobre <code>LogisticaEnvios.GUI</code> (interfaz gráfica) o sobre
+        <code>LogisticaEnvios.Consola</code> (menú de consola) y elija <em>Establecer como proyecto de inicio</em>.</li>
+    <li>Presione <span class="tecla">F5</span> o el botón ▶ Iniciar.</li>
+</ol>
+<h2>2.3 Abrir el programa desde una terminal</h2>
+<p>En la carpeta donde está <code>LogisticaEnvios.sln</code>:</p>
+<pre>dotnet run --project LogisticaEnvios.GUI          (interfaz gráfica)
+dotnet run --project LogisticaEnvios.Consola      (menú de consola)</pre>
+<div class="consejo"><p><strong>Primer paso:</strong> el programa inicia vacío. Cargue los datos de ejemplo con
+<em>Archivo → Cargar datos predeterminados</em> (<span class="tecla">Ctrl</span> + <span class="tecla">D</span>) en la interfaz gráfica, o con
+la opción <strong>1 → 1 → Enter</strong> en la consola.</p></div>
+
+<!-- 3 -->
+<h1>3. Archivos de datos</h1>
+<p>Los datos se guardan en tres archivos de texto separados por comas (<code>.csv</code>) dentro de la carpeta <code>datos</code> del
+proyecto. Se pueden abrir y editar con el Bloc de notas o con Excel. La primera línea es el encabezado.</p>
+<h2>3.1 ciudades.csv</h2>
+<pre>nombre,latitud,longitud
+Guatemala,14.6349,-90.5069
+Cobán,15.4708,-90.3711
+Flores,16.9300,-89.8917</pre>
+<p>La latitud y la longitud son <strong>opcionales</strong>; solo sirven para ubicar la ciudad en el mapa de la interfaz gráfica. Una línea
+puede tener solo el nombre. Si una ciudad no tiene coordenadas, el mapa la coloca en una fila en la parte de abajo.</p>
+<h2>3.2 rutas.csv</h2>
+<pre>origen,destino,costo,tiempo,sentido
+Guatemala,Cobán,110,4.5,D
+Cobán,Zacapa,95,3.5,U</pre>
+<ul>
+    <li><strong>costo</strong> en quetzales y <strong>tiempo</strong> en horas; aceptan decimales con punto o con coma.</li>
+    <li><strong>sentido:</strong> <code>D</code> = doble sentido (ida y vuelta) · <code>U</code> = un solo sentido (de origen a destino). Si se
+        omite, se toma como doble sentido.</li>
+</ul>
+<h2>3.3 envios.csv</h2>
+<pre>codigo,remitente,destinatario,origen,destino
+ENV-1001,Carlos Pérez,María López,Guatemala,Quetzaltenango</pre>
+<h2>3.4 Reglas importantes</h2>
+<ul>
+    <li>Los nombres y datos <strong>no pueden contener comas</strong>, porque la coma separa las columnas.</li>
+    <li>Las ciudades de las rutas y de los envíos deben existir en <code>ciudades.csv</code>. Por eso el orden de carga es: ciudades,
+        rutas y envíos (la opción «Cargar carpeta» lo hace sola).</li>
+    <li>El código de rastreo es único y se guarda en mayúsculas.</li>
+    <li>Si una línea tiene un error, el sistema la salta, sigue con las demás y al final indica el número de línea y el motivo.</li>
+    <li><strong>Guardar</strong> reescribe los tres archivos de la carpeta <code>datos</code> con todo lo que hay en memoria.</li>
+</ul>
+
+<!-- 4 -->
+<h1>4. Interfaz gráfica</h1>
+<h2>4.1 Ventana principal</h2>
+<figure>
+    <img src="img/ventana_inicial.png" alt="Ventana principal">
+    <figcaption>Figura 1. Ventana principal recién abierta, antes de cargar datos.</figcaption>
+</figure>
+<p>La ventana tiene tres partes:</p>
+<ul>
+    <li><strong>Menú</strong> (arriba): <em>Archivo</em> para cargar y guardar datos, y <em>Ayuda</em>.</li>
+    <li><strong>Pestañas:</strong> Rastrear envío, Envíos, Ciudades y rutas, Ruta óptima, Regiones, Autocompletado y Reportes.</li>
+    <li><strong>Barra de estado</strong> (abajo): cantidad de ciudades, envíos y regiones, y el último aviso del sistema.</li>
+</ul>
+<p>Todas las pestañas trabajan sobre los mismos datos: lo que se registra en una pestaña aparece de inmediato en las demás.</p>
+
+<h2>4.2 Menú Archivo</h2>
+<table>
+    <tr><th>Opción</th><th>Atajo</th><th>Qué hace</th></tr>
+    <tr><td>Cargar datos predeterminados</td><td><span class="tecla">Ctrl</span>+<span class="tecla">D</span></td><td>Carga <code>ciudades.csv</code>, <code>rutas.csv</code> y <code>envios.csv</code> de la carpeta <code>datos</code> del proyecto.</td></tr>
+    <tr><td>Cargar carpeta de datos...</td><td><span class="tecla">Ctrl</span>+<span class="tecla">O</span></td><td>Pide una carpeta y carga sus tres archivos en orden.</td></tr>
+    <tr><td>Cargar archivo de ciudades / rutas / envíos...</td><td>—</td><td>Carga un solo archivo y lo agrega a los datos actuales.</td></tr>
+    <tr><td>Guardar datos</td><td><span class="tecla">Ctrl</span>+<span class="tecla">S</span></td><td>Guarda todo en la carpeta <code>datos</code> del proyecto (la misma que se carga con Ctrl+D).</td></tr>
+    <tr><td>Guardar en otra carpeta...</td><td>—</td><td>Pide una carpeta y guarda ahí los tres archivos.</td></tr>
+    <tr><td>Vaciar todos los datos</td><td>—</td><td>Borra de la memoria las ciudades, rutas y envíos. Los archivos no se modifican.</td></tr>
+    <tr><td>Salir</td><td>—</td><td>Cierra el programa.</td></tr>
+</table>
+<p>Si ya hay datos cargados y se vuelve a cargar una carpeta, el programa pregunta: <strong>Sí</strong> vacía todo y carga de nuevo,
+<strong>No</strong> agrega los datos nuevos a los actuales y <strong>Cancelar</strong> no hace nada. Al terminar se muestra un resumen con
+cuántos registros se cargaron de cada archivo y el detalle de las líneas con error.</p>
+<p>En <em>Ayuda → Acerca del proyecto</em> se muestran el curso, las estructuras utilizadas y los integrantes.</p>
+
+<h2>4.3 Cuadros con sugerencias (autocompletado)</h2>
+<div style="display:flex; gap:14pt; align-items:flex-start;">
+    <figure style="flex: 0 0 34%; margin-top: 0;">
+        <img src="img/autocompletado.png" alt="Autocompletado">
+        <figcaption>Figura 2. Al escribir «San» aparecen las ciudades que empiezan así.</figcaption>
+    </figure>
+    <div>
+        <p>Los campos de ciudad y de código de rastreo muestran sugerencias mientras se escribe. Las sugerencias las da el
+        <strong>Trie</strong>, sin importar mayúsculas ni minúsculas.</p>
+        <ul>
+            <li>Escriba las primeras letras: aparece una lista debajo del campo.</li>
+            <li><span class="tecla">↓</span> y <span class="tecla">↑</span> recorren la lista; <span class="tecla">Enter</span> elige la
+                sugerencia marcada; también puede hacer clic sobre ella.</li>
+            <li><span class="tecla">Esc</span> cierra la lista.</li>
+            <li>Si ya escribió el nombre completo, la lista desaparece.</li>
+            <li>En algunos campos, <span class="tecla">Enter</span> también ejecuta la acción principal (por ejemplo, rastrear o
+                buscar).</li>
+        </ul>
+    </div>
+</div>
+
+<h2 class="salto">4.4 Pestaña «Rastrear envío»</h2>
+<p>Muestra cómo trabajan juntas las cuatro estructuras para atender un envío, en cuatro pasos.</p>
+<figure>
+    <img src="img/rastreo.png" alt="Rastrear envío" style="max-width: 80%">
+    <figcaption>Figura 3. Rastreo del envío ENV-1003 (Cobán → Huehuetenango).</figcaption>
+</figure>
+<ol>
+    <li><strong>Paso 1 · Trie:</strong> escriba el código o solo su inicio (por ejemplo <code>ENV-10</code>) y elija una sugerencia. Presione
+        <em>Rastrear</em> o <span class="tecla">Enter</span>.</li>
+    <li><strong>Paso 2 · Tabla Hash:</strong> se muestran los datos del envío y la posición donde está guardado.</li>
+    <li><strong>Paso 3 · Union-Find:</strong> se verifica que el origen y el destino estén en la misma región. Si no lo están, el sistema
+        avisa que no existe ruta y no calcula nada más.</li>
+    <li><strong>Paso 4 · Dijkstra:</strong> se muestran la ruta más económica (línea <span style="color:#dc2626">roja</span>) y la más rápida
+        (línea <span style="color:#7c3aed">morada punteada</span>) con su costo y tiempo totales.</li>
+</ol>
+<h3>Cómo leer el mapa</h3>
+<ul>
+    <li>Cada círculo es una ciudad; el <strong>color</strong> indica su región de distribución (la leyenda de la esquina dice cuántas
+        ciudades tiene cada región).</li>
+    <li>Una línea gris es una ruta de <strong>doble sentido</strong>; una línea con <strong>flecha</strong> es de un solo sentido.</li>
+    <li>El anillo <span style="color:#15803d"><strong>verde</strong></span> marca el origen y el <span style="color:#b91c1c"><strong>rojo</strong></span>
+        el destino.</li>
+    <li>Sobre las rutas se indica «Q costo · tiempo h» cuando hay espacio para escribirlo.</li>
+</ul>
+<div class="nota"><p>Si el envío va entre regiones distintas (por ejemplo ENV-1025, Guatemala → Flores), el paso 3 aparece en rojo y solo
+se marcan el origen y el destino en el mapa. Consulte el reporte «Envíos sin ruta posible» para saber qué ruta conviene agregar.</p></div>
+
+<h2 class="salto">4.5 Pestaña «Envíos · Tabla Hash»</h2>
+<figure>
+    <img src="img/envios.png" alt="Envíos" style="max-width: 80%">
+    <figcaption>Figura 4. Registro, búsqueda y vista de la tabla hash.</figcaption>
+</figure>
+<h3>Registrar un envío</h3>
+<ol>
+    <li>Escriba el código de rastreo (se convierte a mayúsculas), el remitente y el destinatario.</li>
+    <li>Elija la ciudad de origen y la de destino con ayuda de las sugerencias.</li>
+    <li>Presione <em>Registrar envío</em>. El mensaje de abajo confirma el registro o explica el error, y la fila del nuevo envío queda
+        resaltada en la tabla.</li>
+</ol>
+<h3>Buscar o eliminar</h3>
+<ul>
+    <li>Escriba el código o su inicio en «Buscar o eliminar envío» y presione <em>Buscar</em>. Se muestran los datos del envío, la posición
+        que calculó la función hash, <code>h(código)</code>, y la posición donde quedó realmente (si hubo colisión, se indica sondeo
+        lineal).</li>
+    <li>Si el código no existe exactamente, se listan las sugerencias del Trie.</li>
+    <li><em>Eliminar</em> pide confirmación. La posición queda marcada como «Eliminada» y el código se quita de las sugerencias.</li>
+    <li>Al hacer clic en una fila ocupada de la tabla se muestran los datos de ese envío.</li>
+</ul>
+<h3>La tabla de la derecha</h3>
+<p>Cada fila es una posición de la tabla hash: <span class="chip" style="background:#dcfce7">Ocupada</span>,
+<span class="chip" style="background:#fee2e2">Eliminada</span> o <span class="chip" style="background:#f8fafc; border:1px solid #cbd5e1">Vacía</span>.
+Arriba se indican la cantidad de envíos, el tamaño de la tabla, el factor de carga y cuántas veces se ha agrandado la tabla
+(rehashing).</p>
+
+<h2 class="salto">4.6 Pestaña «Ciudades y rutas · Grafo»</h2>
+<figure>
+    <img src="img/grafo_bfs.png" alt="Ciudades y rutas">
+    <figcaption>Figura 5. Recorrido BFS desde Guatemala: los números indican el orden de visita.</figcaption>
+</figure>
+<table>
+    <tr><th>Sección</th><th>Cómo se usa</th></tr>
+    <tr><td>Registrar ciudad</td><td>Escriba el nombre y, si desea verla en su posición del mapa, la latitud y la longitud (por ejemplo
+        14.63 y -90.51). Deje ambas vacías si no las conoce.</td></tr>
+    <tr><td>Registrar ruta</td><td>Elija origen y destino, escriba el costo (Q) y el tiempo (horas) y marque «doble sentido» si la ruta es
+        de ida y vuelta. El mensaje indica si las ciudades ya estaban en la misma región o si la nueva ruta une dos regiones.</td></tr>
+    <tr><td>Eliminar ruta</td><td>Elija origen y destino. Con la casilla marcada también se elimina la ruta de regreso. Las regiones se
+        recalculan automáticamente.</td></tr>
+    <tr><td>Recorrido desde · BFS / DFS</td><td>Elija la ciudad de inicio y presione BFS (por niveles) o DFS (en profundidad). El mapa numera
+        las ciudades en el orden en que se visitan y el cuadro inferior muestra cada paso (en BFS, también el contenido de la
+        cola). Las ciudades que no se alcanzan aparecen apagadas.</td></tr>
+    <tr><td>Lista de adyacencia</td><td>Muestra cada ciudad con sus rutas de salida, costo y tiempo.</td></tr>
+    <tr><td>Limpiar</td><td>Quita el recorrido del mapa y borra el cuadro inferior.</td></tr>
+    <tr><td>Mostrar costo y tiempo</td><td>Muestra u oculta los valores sobre las rutas del mapa.</td></tr>
+</table>
+
+<h2 class="salto">4.7 Pestaña «Ruta óptima · Dijkstra»</h2>
+<figure>
+    <img src="img/rutas.png" alt="Ruta óptima">
+    <figcaption>Figura 6. Ruta más económica de Guatemala a San Marcos y la tabla de Dijkstra.</figcaption>
+</figure>
+<ol>
+    <li>Elija la ciudad de origen y la de destino. También puede hacer <strong>clic en el mapa</strong>: el primer clic marca el origen y
+        el segundo el destino, y la ruta se calcula sola.</li>
+    <li>Elija el criterio: <em>más económica</em> (menor costo) o <em>más rápida</em> (menor tiempo). Si cambia el criterio, la ruta se
+        recalcula.</li>
+    <li>Presione <em>Calcular ruta</em>. El cuadro «Resultado» indica primero lo que respondió el Union-Find y luego el camino, el costo
+        total, el tiempo total y la cantidad de tramos.</li>
+</ol>
+<p>La tabla de abajo muestra, para cada ciudad, la menor distancia desde el origen y la ciudad anterior en ese camino. Las filas
+en rojo claro forman el camino elegido y «∞» indica que no se puede llegar a esa ciudad.</p>
+
+<h2 class="salto">4.8 Pestaña «Regiones · Union-Find»</h2>
+<figure>
+    <img src="img/regiones.png" alt="Regiones">
+    <figcaption>Figura 7. Cobán y Flores pertenecen a regiones distintas.</figcaption>
+</figure>
+<ul>
+    <li><strong>¿Están en la misma región?</strong> Elija dos ciudades y presione <em>Verificar con Find</em>. Se muestra el representante de
+        cada una; si es el mismo, están en la misma región.</li>
+    <li><strong>Regiones de distribución:</strong> cada región con su color (el mismo del mapa), su representante, cuántas ciudades tiene
+        y cuáles son.</li>
+    <li><strong>Arreglos padre y rango:</strong> el estado interno de la estructura. Las dos ciudades consultadas quedan resaltadas.</li>
+</ul>
+
+<h2 class="salto">4.9 Pestaña «Autocompletado · Trie»</h2>
+<figure>
+    <img src="img/trie.png" alt="Autocompletado">
+    <figcaption>Figura 8. Prefijo «san» en el Trie de ciudades.</figcaption>
+</figure>
+<ol>
+    <li>Elija el Trie que desea consultar: ciudades o códigos de rastreo.</li>
+    <li>Escriba un prefijo. Al instante se muestran las sugerencias en orden alfabético, si el texto es una palabra completa y si
+        existe alguna palabra que empiece así.</li>
+    <li>A la derecha se ve el árbol: cada nodo es una letra y ✔ marca el final de una palabra. El camino del prefijo escrito se resalta en
+        amarillo. Use <em>Expandir todo</em> o <em>Contraer</em> para ver el árbol completo o solo el primer nivel.</li>
+</ol>
+
+<h2 class="salto">4.10 Pestaña «Reportes»</h2>
+<figure>
+    <img src="img/reporte_costos.png" alt="Reportes">
+    <figcaption>Figura 9. Reporte «Costo y tiempo estimado por envío» con su resumen.</figcaption>
+</figure>
+<p>Elija un reporte de la lista. La tabla muestra los datos y el cuadro inferior un resumen con conclusiones y recomendaciones.
+Los reportes se calculan con los datos actuales; <em>Actualizar reporte</em> los vuelve a calcular.</p>
+<table>
+    <tr><th>Reporte</th><th>Para qué sirve</th></tr>
+    <tr><td>Costo y tiempo estimado por envío</td><td>Costo y tiempo de cada envío por su ruta más económica, comparado con la más rápida; costo
+        total, promedio y envío más costoso. Las filas en rojo son envíos sin ruta.</td></tr>
+    <tr><td>Envíos sin ruta posible</td><td>Envíos que hoy no se pueden despachar, el motivo y la acción recomendada, incluida la
+        conexión más corta posible entre regiones.</td></tr>
+    <tr><td>Envíos por región de distribución</td><td>Cuántos envíos salen, llegan, se quedan dentro de cada región o van hacia otra.</td></tr>
+    <tr><td>Ciudades con más conexiones</td><td>Ranking de ciudades; sugiere el centro de distribución y señala ciudades que dependen de una
+        sola ruta o a las que no llega ninguna.</td></tr>
+</table>
+<ul>
+    <li><em>Exportar este reporte a .csv...</em> guarda la tabla del reporte elegido (se abre con Excel).</li>
+    <li><em>Exportar todos los reportes a .txt...</em> guarda los cuatro reportes, con sus resúmenes, en un solo archivo de texto.</li>
+    <li>Por defecto los archivos se guardan en la carpeta <code>reportes</code> del proyecto.</li>
+</ul>
+
+<!-- 5 -->
+<h1>5. Menú de consola</h1>
+<p>La aplicación de consola ofrece las mismas funciones por medio de menús numerados. Escriba el número de la opción y presione
+<span class="tecla">Enter</span>. En todos los submenús, <strong>0</strong> regresa al menú anterior.</p>
+<h2>5.1 Menú principal</h2>
+<pre class="consola"># LOGÍSTICA DE ENVÍOS
+Ciudades: 16 | Envíos: 8 | Regiones: 2
+
+1. Cargar datos desde archivos
+2. Ciudades y rutas (Grafo)
+3. Envíos (Tabla Hash)
+4. Regiones de distribución (Union-Find)
+5. Autocompletado (Trie)
+6. Rastrear envío y calcular su ruta (flujo integrado)
+7. Guardar datos en archivos
+8. Reportes para toma de decisiones
+0. Salir
+
+Seleccione una opción: <span class="usuario">_</span></pre>
+<h2>5.2 Cómo escribir ciudades y códigos (sugerencias)</h2>
+<p>Cuando el programa pide una ciudad o un código, puede escribir el nombre completo o solo su inicio:</p>
+<ul>
+    <li>Si escribe el nombre completo, se acepta directamente (sin importar mayúsculas).</li>
+    <li>Si hay <strong>una sola</strong> coincidencia, el programa pregunta <code>¿Se refiere a "Cobán"? (s/n)</code>.</li>
+    <li>Si hay <strong>varias</strong>, se muestran numeradas y se elige con su número (0 cancela).</li>
+    <li>Las preguntas de sí o no aceptan <code>s</code>, <code>si</code> o <code>sí</code>; cualquier otra respuesta se toma como «no».</li>
+    <li>Los números aceptan punto o coma decimal. El costo y el tiempo deben ser mayores o iguales a 0.</li>
+</ul>
+
+<h2>5.3 Opción 1 · Cargar datos desde archivos</h2>
+<table>
+    <tr><th>Opción</th><th>Descripción</th></tr>
+    <tr><td>1. Cargar todo desde una carpeta</td><td>Carga ciudades, rutas y envíos de una carpeta. Con <span class="tecla">Enter</span> usa la carpeta <code>datos</code> del proyecto.</td></tr>
+    <tr><td>2 a 4. Cargar archivo de ciudades / rutas / envíos</td><td>Carga un solo archivo. Con <span class="tecla">Enter</span> usa el de la carpeta <code>datos</code>. Puede pegar una ruta copiada con «Copiar como ruta de acceso» (las comillas se quitan solas).</td></tr>
+</table>
+<pre class="consola">Seleccione una opción: <span class="usuario">1</span>
+Ruta de la carpeta (Enter para usar la carpeta por defecto): <span class="usuario">[Enter]</span>
+
+# CARGANDO CIUDADES
+Ciudades cargadas: 16 | Líneas con error: 0
+
+# CARGANDO RUTAS
+Rutas cargadas: 18 | Líneas con error: 0
+
+# CARGANDO ENVÍOS
+Envíos cargados: 8 | Líneas con error: 0</pre>
+
+<h2>5.4 Opción 2 · Ciudades y rutas (Grafo)</h2>
+<table>
+    <tr><th>Opción</th><th>Descripción</th></tr>
+    <tr><td>1. Registrar ciudad</td><td>Pide el nombre y pregunta si desea ingresar latitud y longitud (opcional).</td></tr>
+    <tr><td>2. Registrar ruta</td><td>Pide origen, destino, costo, tiempo y si es de doble sentido. Informa lo que respondió el Union-Find.</td></tr>
+    <tr><td>3. Eliminar ruta</td><td>Pide origen y destino, y pregunta si también se elimina la ruta de regreso.</td></tr>
+    <tr><td>4. Mostrar ciudades y rutas</td><td>Lista de adyacencia: cada ciudad con sus rutas de salida.</td></tr>
+    <tr><td>5. Recorrido BFS · 6. Recorrido DFS</td><td>Pide la ciudad de inicio y muestra el orden de visita (en BFS, también la cola).</td></tr>
+    <tr><td>7. Ruta más económica · 8. Ruta más rápida</td><td>Pide origen y destino; muestra la tabla de Dijkstra y el camino con su costo y tiempo.</td></tr>
+</table>
+<pre class="consola">Seleccione una opción: <span class="usuario">7</span>
+Ciudad de origen: <span class="usuario">Guatemala</span>
+Ciudad de destino: <span class="usuario">Quetzaltenango</span>
+Union-Find: ambas ciudades están en la misma región. Se ejecuta Dijkstra.
+
+# DIJKSTRA DESDE GUATEMALA (POR COSTO)
+Ciudad              Distancia     Anterior
+Guatemala           Q0,00         -
+Antigua Guatemala   Q35,00        Guatemala
+Chimaltenango       Q40,00        Guatemala
+...
+Flores              ∞             -
+
+# RUTA MÁS ECONÓMICA
+Camino: Guatemala → Chimaltenango → Quetzaltenango
+Costo total: Q130,00
+Tiempo total: 4,2 h</pre>
+
+<h2>5.5 Opción 3 · Envíos (Tabla Hash)</h2>
+<table>
+    <tr><th>Opción</th><th>Descripción</th></tr>
+    <tr><td>1. Registrar envío</td><td>Pide código, remitente, destinatario, ciudad de origen y de destino (puede escribir solo el inicio).</td></tr>
+    <tr><td>2. Buscar envío por código exacto</td><td>Busca el código tal como se escribe.</td></tr>
+    <tr><td>3. Buscar envío por inicio del código</td><td>El Trie sugiere los códigos que empiezan así y la tabla hash muestra el elegido.</td></tr>
+    <tr><td>4. Eliminar envío</td><td>Pide el código (o su inicio) y una confirmación.</td></tr>
+    <tr><td>5. Mostrar tabla hash</td><td>Muestra cada posición (envío, VACÍO o ELIMINADO), el tamaño, el factor de carga y los rehashing.</td></tr>
+</table>
+
+<h2>5.6 Opción 4 · Regiones de distribución (Union-Find)</h2>
+<table>
+    <tr><th>Opción</th><th>Descripción</th></tr>
+    <tr><td>1. Verificar si dos ciudades están en la misma región</td><td>Muestra el representante de cada ciudad y el resultado.</td></tr>
+    <tr><td>2. Mostrar regiones</td><td>Cada región con su representante y sus ciudades.</td></tr>
+    <tr><td>3. Mostrar arreglos padre y rango</td><td>Estado interno de la estructura.</td></tr>
+</table>
+<pre class="consola">Primera ciudad: <span class="usuario">Cob</span>
+¿Se refiere a "Cobán"? (s/n): <span class="usuario">s</span>
+Segunda ciudad: <span class="usuario">Flo</span>
+¿Se refiere a "Flores"? (s/n): <span class="usuario">s</span>
+Representante de Cobán: Guatemala
+Representante de Flores: Flores
+Cobán y Flores pertenecen a regiones distintas.</pre>
+
+<h2>5.7 Opción 5 · Autocompletado (Trie)</h2>
+<table>
+    <tr><th>Opción</th><th>Descripción</th></tr>
+    <tr><td>1. Sugerir ciudades por prefijo · 2. Sugerir códigos por prefijo</td><td>Lista las palabras que empiezan con el prefijo.</td></tr>
+    <tr><td>3. Verificar si una ciudad existe</td><td>Búsqueda exacta del nombre completo.</td></tr>
+    <tr><td>4. Verificar si existe algún nombre con un prefijo</td><td>Indica si hay ciudades y si hay códigos que empiezan así.</td></tr>
+    <tr><td>5. Mostrar todas las ciudades · 6. Mostrar todos los códigos</td><td>Listado completo en orden alfabético.</td></tr>
+</table>
+<pre class="consola">Seleccione una opción: <span class="usuario">1</span>
+Ingrese el prefijo: <span class="usuario">san</span>
+Sugerencias (2):
+- San Benito
+- San Marcos</pre>
+
+<h2>5.8 Opción 6 · Rastrear envío y calcular su ruta</h2>
+<p>Es el flujo integrado: el Trie sugiere el código, la tabla hash localiza el envío, el Union-Find valida la conectividad y
+Dijkstra calcula la ruta según el criterio elegido (1 económica, 2 rápida o 3 ambas).</p>
+<pre class="consola">Código de rastreo (o su inicio): <span class="usuario">ENV-10</span>
+Sugerencias:
+1. ENV-1001
+2. ENV-1002
+3. ENV-1003
+4. ENV-1010
+5. ENV-1025
+Seleccione un número (0 para cancelar): <span class="usuario">2</span>
+
+# DATOS DEL ENVÍO
+Código de rastreo: ENV-1002
+Remitente: Ana Gómez
+Destinatario: Luis Ramírez
+Ciudad de origen: Escuintla
+Ciudad de destino: Puerto Barrios
+
+1. Ruta más económica
+2. Ruta más rápida
+3. Ambas
+Seleccione el criterio: <span class="usuario">1</span>
+
+Union-Find: ambas ciudades están en la misma región. Se ejecuta Dijkstra.
+
+# RUTA MÁS ECONÓMICA
+Camino: Escuintla → Guatemala → Zacapa → Puerto Barrios
+Costo total: Q200,00
+Tiempo total: 7,1 h</pre>
+
+<h2>5.9 Opción 7 · Guardar datos en archivos</h2>
+<p>Pide la carpeta donde guardar; con <span class="tecla">Enter</span> se guarda en la carpeta <code>datos</code> del proyecto y se reemplazan
+<code>ciudades.csv</code>, <code>rutas.csv</code> y <code>envios.csv</code>.</p>
+
+<h2>5.10 Opción 8 · Reportes para toma de decisiones</h2>
+<table>
+    <tr><th>Opción</th><th>Descripción</th></tr>
+    <tr><td>1 a 4</td><td>Muestra un reporte: costos por envío, envíos sin ruta, envíos por región o ciudades con más conexiones.</td></tr>
+    <tr><td>5. Mostrar todos los reportes</td><td>Muestra los cuatro, uno tras otro.</td></tr>
+    <tr><td>6. Exportar todos los reportes a .txt</td><td>Pide la ruta del archivo; con <span class="tecla">Enter</span> usa <code>reportes\reportes.txt</code>.</td></tr>
+    <tr><td>7. Exportar un reporte a .csv</td><td>Pide el número del reporte y la ruta del archivo; con <span class="tecla">Enter</span> usa la carpeta <code>reportes</code>.</td></tr>
+</table>
+<pre class="consola"># ENVÍOS SIN RUTA POSIBLE
+Envíos que hoy no se pueden despachar, el motivo y la acción recomendada para atenderlos.
+
+Código    Origen      Destino  Motivo
+--------  ----------  -------  ------------------------------------------------------------------
+ENV-1025  Guatemala   Flores   Origen en la región 1 y destino en la región 2 (sin conexión entre ellas)
+ENV-2002  San Benito  Poptún   Misma región, pero las rutas de un solo sentido no permiten llegar
+
+Resumen:
+- 2 de 8 envíos no se pueden despachar con la red actual.
+- Prioridad: conectar la región 1 con la región 2 resolvería 1 envío(s).
+  Conexión sugerida: Puerto Barrios – Poptún (≈ 111 km en línea recta).</pre>
+<p class="nota" style="font-size:9.5pt">En pantalla, la tabla incluye además la columna «Recomendación»; aquí se omitió por espacio.</p>
+
+<!-- 6 -->
+<h1>6. Mensajes del sistema y cómo resolverlos</h1>
+<table>
+    <tr><th>Mensaje</th><th>Causa</th><th>Qué hacer</th></tr>
+    <tr><td>La ciudad X ya existe.</td><td>Se intentó registrar un nombre repetido.</td><td>Use otro nombre o use la ciudad existente.</td></tr>
+    <tr><td>La ciudad X no existe. / La ciudad de origen o de destino no existe.</td><td>Nombre mal escrito o ciudad no registrada.</td><td>Elija la ciudad de las sugerencias o regístrela primero.</td></tr>
+    <tr><td>Una ciudad no puede tener una ruta hacia sí misma.</td><td>Origen y destino iguales.</td><td>Elija dos ciudades distintas.</td></tr>
+    <tr><td>El costo y el tiempo no pueden ser negativos.</td><td>Valor menor que 0.</td><td>Ingrese valores mayores o iguales a 0.</td></tr>
+    <tr><td>Ya existe una ruta de X hacia Y.</td><td>La ruta ya está registrada.</td><td>Para cambiarla, elimínela y regístrela de nuevo.</td></tr>
+    <tr><td>Ruta X → Y registrada. La ruta de regreso Y → X ya existía...</td><td>Se pidió doble sentido pero la vuelta ya existía.</td><td>Nada: la vuelta conserva sus propios valores.</td></tr>
+    <tr><td>Ya existe un envío con el código X.</td><td>El código de rastreo debe ser único.</td><td>Use otro código.</td></tr>
+    <tr><td>... no pueden contener comas.</td><td>Hay una coma en un nombre o dato.</td><td>Quite la coma.</td></tr>
+    <tr><td>Debe indicar la latitud y la longitud, o ninguna de las dos.</td><td>Solo se escribió una coordenada.</td><td>Complete ambas o deje ambas vacías.</td></tr>
+    <tr><td>X y Y pertenecen a regiones distintas... no se ejecuta Dijkstra.</td><td>No hay ninguna cadena de rutas entre ellas.</td><td>Registre una ruta que una las dos regiones (vea el reporte «Envíos sin ruta posible»).</td></tr>
+    <tr><td>Las ciudades están en la misma región, pero por las rutas de un solo sentido no hay forma de llegar...</td><td>Las rutas existentes solo van en sentido contrario.</td><td>Registre la ruta de regreso o una de doble sentido.</td></tr>
+    <tr><td>No se encontró el archivo: ...</td><td>La ruta o el nombre del archivo no existen.</td><td>Revise la carpeta; los archivos deben llamarse <code>ciudades.csv</code>, <code>rutas.csv</code> y <code>envios.csv</code>.</td></tr>
+    <tr><td>Línea N: faltan datos (...)</td><td>La línea tiene menos columnas de las necesarias.</td><td>Corrija esa línea del archivo.</td></tr>
+    <tr><td>Línea N: el costo o el tiempo no es un número válido.</td><td>Texto donde se esperaba un número.</td><td>Escriba el número (con punto decimal).</td></tr>
+    <tr><td>You must install or update .NET to run this application.</td><td>La computadora no tiene .NET 8 ni una versión más nueva.</td><td>Instale .NET 8 o superior desde el sitio oficial de Microsoft.</td></tr>
+</table>
+
+<!-- 7 -->
+<h1>7. Preguntas frecuentes</h1>
+<h3>¿Por qué dice que dos ciudades están en la misma región pero no hay ruta?</h3>
+<p>La región solo indica que las ciudades están conectadas por alguna cadena de rutas, sin importar el sentido. Si en el camino hay
+rutas de un solo sentido que van al revés, no se puede llegar. Ejemplo con los datos de ejemplo: de Poptún se puede ir a Flores,
+pero de San Benito no se puede llegar a Poptún.</p>
+<h3>¿Dónde se guardan los cambios?</h3>
+<p>En la carpeta <code>datos</code> del proyecto, al usar <em>Archivo → Guardar datos</em> (<span class="tecla">Ctrl</span>+<span class="tecla">S</span>) o
+la opción 7 de la consola con <span class="tecla">Enter</span>. Lo que no se guarda se pierde al cerrar el programa.</p>
+<h3>¿Puedo usar mis propios archivos?</h3>
+<p>Sí. Prepare los tres archivos con el formato de la sección 3 y cárguelos con <em>Archivo → Cargar carpeta de datos...</em> o con la
+opción 1 de la consola.</p>
+<h3>¿Por qué el mapa no se parece exactamente al de Guatemala?</h3>
+<p>Las ciudades se ubican según su latitud y longitud, pero el mapa estira cada eje para aprovechar el espacio y separa un poco las
+ciudades que quedarían encimadas (por ejemplo Flores y San Benito).</p>
+<h3>¿Cómo vuelvo a empezar con los datos originales?</h3>
+<p>Use <em>Archivo → Cargar datos predeterminados</em> y responda <strong>Sí</strong> para vaciar los datos actuales. Si ya guardó cambios en la
+carpeta <code>datos</code>, se cargarán esos cambios.</p>
+<h3>¿Qué diferencia hay entre la ruta más económica y la más rápida?</h3>
+<p>La más económica minimiza la suma de los costos (Q) y la más rápida la suma de los tiempos (horas). Pueden coincidir o no; en la
+pestaña «Rastrear envío» se ven las dos a la vez.</p>
+
+</body>
+</html>

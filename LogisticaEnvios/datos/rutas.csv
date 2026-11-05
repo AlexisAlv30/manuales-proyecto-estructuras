@@ -1,0 +1,19 @@
+origen,destino,costo,tiempo,sentido
+Guatemala,Antigua Guatemala,35,1,D
+Guatemala,Chimaltenango,40,1.2,D
+Antigua Guatemala,Chimaltenango,20,0.6,D
+Guatemala,Escuintla,45,1.3,D
+Escuintla,Mazatenango,60,2,D
+Mazatenango,Retalhuleu,25,0.7,D
+Retalhuleu,Quetzaltenango,40,1.3,D
+Chimaltenango,Quetzaltenango,90,3,D
+Quetzaltenango,San Marcos,35,1.2,D
+Quetzaltenango,Huehuetenango,70,2.5,D
+Huehuetenango,San Marcos,50,2.5,U
+Guatemala,Cobán,110,4.5,D
+Cobán,Zacapa,95,3.5,U
+Guatemala,Zacapa,80,2.8,D
+Zacapa,Chiquimula,25,0.8,D
+Zacapa,Puerto Barrios,75,3,D
+Flores,San Benito,10,0.2,D
+Poptún,Flores,55,2,U

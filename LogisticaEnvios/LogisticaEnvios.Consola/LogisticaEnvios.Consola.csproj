@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>LogisticaEnvios</RootNamespace>
+    <AssemblyName>LogisticaEnvios</AssemblyName>
+    <!-- Si la PC no tiene .NET 8 pero sí una versión más nueva, se ejecuta con esa -->
+    <RollForward>Major</RollForward>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LogisticaEnvios.Core\LogisticaEnvios.Core.csproj" />
+  </ItemGroup>
+
+  <!-- Copia la carpeta datos (compartida con la interfaz gráfica) junto al ejecutable -->
+  <ItemGroup>
+    <None Include="..\datos\*.csv" Link="datos\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Biblioteca con las cuatro estructuras y el sistema que las integra.
+       La usan tanto la aplicación de consola como la interfaz gráfica. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>LogisticaEnvios</RootNamespace>
+  </PropertyGroup>
+
+</Project>
